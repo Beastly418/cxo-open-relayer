@@ -1,0 +1,250 @@
+
+// File: @openzeppelin/contracts/utils/Context.sol
+
+
+// OpenZeppelin Contracts (last updated v5.0.1) (utils/Context.sol)
+
+pragma solidity ^0.8.20;
+
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+
+    function _contextSuffixLength() internal view virtual returns (uint256) {
+        return 0;
+    }
+}
+
+// File: @openzeppelin/contracts/access/Ownable.sol
+
+
+// OpenZeppelin Contracts (last updated v5.0.0) (access/Ownable.sol)
+
+pragma solidity ^0.8.20;
+
+
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+ *
+ * The initial owner is set to the address provided by the deployer. This can
+ * later be changed with {transferOwnership}.
+ *
+ * This module is used through inheritance. It will make available the modifier
+ * `onlyOwner`, which can be applied to your functions to restrict their use to
+ * the owner.
+ */
+abstract contract Ownable is Context {
+    address private _owner;
+
+    /**
+     * @dev The caller account is not authorized to perform an operation.
+     */
+    error OwnableUnauthorizedAccount(address account);
+
+    /**
+     * @dev The owner is not a valid owner account. (eg. `address(0)`)
+     */
+    error OwnableInvalidOwner(address owner);
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    /**
+     * @dev Initializes the contract setting the address provided by the deployer as the initial owner.
+     */
+    constructor(address initialOwner) {
+        if (initialOwner == address(0)) {
+            revert OwnableInvalidOwner(address(0));
+        }
+        _transferOwnership(initialOwner);
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        _checkOwner();
+        _;
+    }
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    /**
+     * @dev Throws if the sender is not the owner.
+     */
+    function _checkOwner() internal view virtual {
+        if (owner() != _msgSender()) {
+            revert OwnableUnauthorizedAccount(_msgSender());
+        }
+    }
+
+    /**
+     * @dev Leaves the contract without owner. It will not be possible to call
+     * `onlyOwner` functions. Can only be called by the current owner.
+     *
+     * NOTE: Renouncing ownership will leave the contract without an owner,
+     * thereby disabling any functionality that is only available to the owner.
+     */
+    function renounceOwnership() public virtual onlyOwner {
+        _transferOwnership(address(0));
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Can only be called by the current owner.
+     */
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        if (newOwner == address(0)) {
+            revert OwnableInvalidOwner(address(0));
+        }
+        _transferOwnership(newOwner);
+    }
+
+    /**
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
+     * Internal function without access restriction.
+     */
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+}
+
+// File: API_V2/Bottable.sol
+
+
+
+pragma solidity ^0.8.0;
+
+
+
+contract Bottable is Ownable {
+
+    mapping(address => bool) public approvedBots;
+
+    constructor(address _initialBot, address _owner) Ownable(_owner) {
+        approvedBots[_initialBot] = true;
+    }
+
+    function addBot(address _bot) public onlyOwner {
+        require(_bot != address(0));
+        approvedBots[_bot] = true;
+    }
+
+    function removeBot(address _bot) public onlyOwner {
+        require(_bot != address(0));
+        approvedBots[_bot] = false;
+    }
+
+    modifier onlyBot() {
+        require(approvedBots[msg.sender]);
+        _;
+    }
+}
+// File: API_V2/ITokenDistAPI.sol
+
+
+
+pragma solidity ^0.8.0;
+
+
+interface ITokenDistAPI {
+
+
+    /*
+    *  @dev return latest distribution, we store it but we just use the autogenerated getter for that
+    */
+    function getDistribution() external view returns (uint[][] memory);
+
+    /*
+    *  @dev returns an array of uint256s which is the last X elements in the array.
+    *  @param _id which array are we pulling the data from
+    *  @param _numEntries how many data entries are we pulling, going backwards
+    */
+    function getEntries(uint _id, uint _numEntries) external view returns(uint[][] memory);
+
+
+    /*
+    *  @dev stores the latest distribution data
+    *  @param _distribution array of struct {string:name, uint:amt} that we are pushing onto the end of our historical data
+    */
+    function pushDistribution(uint[][] memory _distribution) external;
+
+    /*
+    *  @dev replaces historical distribution data
+    *  @param _id which distribution struct we want to update in the array
+    *  @param _distribution struct of {string:name, uint:amt} that we are replacing at the chose id
+    */
+    function updateDistribution(uint _id, uint[][] memory _distribution) external;
+
+}
+// File: API_V2/OpenRelayerTokenDistAPI.sol
+
+
+
+pragma solidity ^0.8.0;
+
+
+
+contract OpenRelayerTokenDistAPI is Bottable, ITokenDistAPI {
+
+    /*
+    *   @dev [distributionID][entry][name, amt]
+    */
+    uint[][][] public distributions;
+
+    constructor(address _initialBot) Bottable(_initialBot, msg.sender) {
+        
+    }
+
+    // Setters
+
+    function pushDistribution(uint[][] memory _distribution) external {
+        distributions.push(_distribution);
+    }
+
+    function updateDistribution(uint _id, uint[][] memory _distribution) external {
+        distributions[_id] = _distribution;
+    }
+
+    // Getters
+
+    function getDistribution() external view returns (uint[][] memory) {
+        return distributions[distributions.length-1];
+    }
+
+    function getEntries(uint _id, uint _numEntries) external view returns(uint[][] memory) {
+        uint[][] memory retVal = new uint[][](_numEntries);
+        uint start = distributions[_id].length - _numEntries;
+        uint j = 0;
+        for(uint i = start; i < distributions[_id].length; i++){
+            retVal[j] = distributions[_id][i];
+            j++;
+        }
+        return retVal;
+    }
+
+
+}
