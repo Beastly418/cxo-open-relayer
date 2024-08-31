@@ -21,7 +21,7 @@ SDK TODO:
 * Zapper
 * NFT mint for stake
 * Vampire Vaults (automagically convert rewards)
- * Decentralized ownership, all tied to a single factory
+  * Decentralized ownership, all tied to a single factory
 * Steam key encrypter (for stake to buy keys)
 * CCIP bridge-to-zapper
 * Example code for all of the above
