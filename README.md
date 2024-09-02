@@ -11,7 +11,7 @@ Immportant notes: The restock API only tracks the current automated restock syst
 TODO:
 * Upload bot scripts for running the api
 * Re-open source the relayer code
-* Re-write the relayer in zig because zig looks fun to learn (will need to do raw json-rpc calls and manual signing so tons to learn!!) [lowest priority]
+* Re-write the relayer in zig
 
 API V3 Improvements:
 * Integrate the old restock data into the API in a neat way
