@@ -9,7 +9,7 @@ Immportant notes: The restock API only tracks the current automated restock syst
 TODO:
 * Upload bot scripts for running the api
 * Re-open source the relayer code
-* Re-write the relayer in zig because zig looks fun to learn (will need to do raw json-rpc calls and manual signing so tons to learn!!)
+* Re-write the relayer in zig because zig looks fun to learn (will need to do raw json-rpc calls and manual signing so tons to learn!!) [lowest priority]
 
 API V3 Improvements:
 * Integrate the old restock data into the API in a neat way
@@ -23,6 +23,8 @@ SDK TODO:
 * NFT mint for stake
 * Vampire Vaults (automagically convert rewards)
   * Decentralized ownership, all tied to a single factory
+  * These will allow end users to open up their own vaults where they can get a % of the platform fees
+  * All deposits will filter down to the core Dynamic Relayer Pool
 * Steam key encrypter (for stake to buy keys)
 * CCIP bridge-to-zapper
 * Example code for all of the above
